@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Agenda · Planificación y Cumplimiento</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --panel:#ffffff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb;
+    --accent:#0ea5a4; --accent2:#2563eb; --good:#16a34a; --bad:#dc2626; --warn:#d97706;
+    --radius:14px; --shadow:0 1px 3px rgba(16,24,40,.08),0 8px 24px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:14px}
+  .app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+  .side{background:linear-gradient(180deg,#0f2a33,#123f4a);color:#e6f0f2;padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .brand .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:20px;color:#fff}
+  .brand .t{font-weight:700;font-size:16px;line-height:1.15}
+  .brand .s{font-size:11px;color:#9fc0c8}
+  nav{margin-top:16px;display:flex;flex-direction:column;gap:4px}
+  nav a{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;color:#cfe4e8;text-decoration:none;font-size:14.5px;font-weight:500;transition:.15s}
+  nav a .ic{width:22px;text-align:center;font-size:16px}
+  nav a:hover{background:rgba(255,255,255,.08);color:#fff}
+  nav a.active{background:var(--accent);color:#fff}
+  .side .foot{margin-top:auto;font-size:11px;color:#8fb3bc;padding:8px}
+  .main{padding:22px 26px 60px;max-width:1180px;width:100%}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+  .topbar h1{font-size:22px;margin:0}
+  .topbar .sub{color:var(--muted);font-size:13px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:.15s}
+  .btn:hover{border-color:#cbd5e1;background:#f8fafc}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:#0b918f}
+  .btn.blue{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  .btn.danger{color:var(--bad);border-color:#fecaca}
+  .btn.sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
+  .btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+  .btn.ghost:hover{background:#f1f5f9;color:var(--ink)}
+  .grid{display:grid;gap:16px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .card{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+  .kpi .k-label{font-size:12.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .kpi .k-val{font-size:28px;font-weight:800;margin-top:6px}
+  .kpi .k-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .card h2{font-size:15px;margin:0 0 12px}
+  .card h3{font-size:14px;margin:0 0 8px}
+  .bar{height:8px;border-radius:99px;background:#eef2f7;overflow:hidden}
+  .bar>span{display:block;height:100%;background:var(--accent);border-radius:99px}
+  .bar>span.warn{background:var(--warn)} .bar>span.bad{background:var(--bad)} .bar>span.good{background:var(--good)}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+  .pill.green{background:#dcfce7;color:#15803d}
+  .pill.red{background:#fee2e2;color:#b91c1c}
+  .pill.amber{background:#fef3c7;color:#b45309}
+  .pill.blue{background:#dbeafe;color:#1d4ed8}
+  .pill.gray{background:#f1f5f9;color:#475569}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .chart{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px}
+  .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+  .chart .col .b{width:100%;max-width:34px;background:linear-gradient(180deg,#2dd4bf,#0ea5a4);border-radius:6px 6px 3px 3px;min-height:2px}
+  .chart .col .b.h{background:linear-gradient(180deg,#93c5fd,#2563eb)}
+  .chart .col .b.red{background:linear-gradient(180deg,#fca5a5,#dc2626)}
+  .chart .col .lbl{font-size:10px;color:var(--muted);white-space:nowrap}
+  .chart .col .val{font-size:10px;color:var(--muted)}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .toolbar input,.toolbar select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff}
+  .muted{color:var(--muted)}
+  .empty{text-align:center;color:var(--muted);padding:40px 20px}
+  .empty .big{font-size:38px;margin-bottom:8px}
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:50;overflow:auto}
+  .modal-bg.open{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:pop .16s ease}
+  @keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+  .modal .mh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .modal .mh h3{margin:0;font-size:16px}
+  .modal .mb{padding:18px 20px;display:grid;gap:13px}
+  .modal .mf{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:#374151;margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff}
+  .field textarea{min-height:70px;resize:vertical}
+  .f2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:13.5px}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;background:#f1f5f9;border:1px solid var(--line);border-radius:99px;padding:4px 10px;margin:2px 3px 2px 0}
+  .act-row{display:grid;grid-template-columns:1fr 110px 90px 40px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+  .act-row .nm{font-weight:600}
+  .act-row .cat{font-size:12px;color:var(--muted)}
+  .act-row input[type=number]{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px}
+  .act-row input[type=text]{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px}
+  .chk{width:22px;height:22px;accent-color:var(--accent);cursor:pointer}
+  .saved{color:var(--good);font-weight:600}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:11px 18px;border-radius:10px;font-size:13.5px;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:100}
+  .toast.show{opacity:1}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .tabs button{border:1px solid var(--line);background:#fff;padding:8px 14px;border-radius:99px;font-size:13px;font-weight:600;color:var(--muted)}
+  .tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .contact-chk{display:flex;align-items:flex-start;gap:8px;padding:6px 0}
+  .contact-chk .sub{font-size:12px;color:var(--muted)}
+  .dot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;margin-right:6px;flex:none}
+  .swatches{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .swatch{width:28px;height:28px;border-radius:8px;cursor:pointer;border:2px solid transparent;flex:none}
+  .swatch.sel{border-color:#0f172a;box-shadow:0 0 0 2px #fff inset}
+  .cliente-card{border-left:5px solid #2563eb}
+  .alarm-bg{position:fixed;inset:0;background:rgba(88,14,14,.55);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+  .alarm-bg.open{display:flex}
+  .alarm{background:#fff;border-radius:18px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:pop .2s ease;border-top:6px solid var(--bad)}
+  .rem-type{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px}
+  .overdue{color:var(--bad);font-weight:700}
+  @media(max-width:860px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.side nav{flex-direction:row;flex-wrap:wrap}.main{padding:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo">📋</div>
+      <div><div class="t">Mi Agenda</div><div class="s">Planificación y cumplimiento</div></div>
+    </div>
+    <nav>
+      <a href="#" data-tab="dashboard" class="active"><span class="ic">📊</span> Dashboard</a>
+      <a href="#" data-tab="hoy"><span class="ic">✅</span> Registro diario</a>
+      <a href="#" data-tab="skills"><span class="ic">🎯</span> Skills / Actividades</a>
+      <a href="#" data-tab="reuniones"><span class="ic">🤝</span> Reuniones</a>
+      <a href="#" data-tab="clientes"><span class="ic">🏢</span> Clientes</a>
+      <a href="#" data-tab="ventas"><span class="ic">💰</span> Ventas</a>
+      <a href="#" data-tab="contactos"><span class="ic">👥</span> Contactos</a>
+      <a href="#" data-tab="recordatorios"><span class="ic">🔔</span> Recordatorios</a>
+      <a href="#" data-tab="planificacion"><span class="ic">🗓️</span> Planificación</a>
+    </nav>
+    <div class="foot">Base de datos SQLite local<br>Funciona sin internet · Guardado automático<br><b style="color:#e6f0f2">🕗 Horario: L-V · 8:00 a 17:00</b></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="sub" id="todayLabel"></div>
+        <div class="sub" id="backupStatus" style="color:var(--accent);font-weight:600"></div>
+      </div>
+      <div class="actions">
+        <button class="btn sm" id="backupBtn" onclick="toggleBackup()">🛡️ Respaldo automático</button>
+        <button class="btn sm" onclick="exportDB()">💾 Exportar .sqlite</button>
+        <button class="btn sm" onclick="document.getElementById('importFile').click()">📂 Importar</button>
+        <input type="file" id="importFile" accept=".sqlite,.db,.sqlite3" style="display:none">
+      </div>
+    </div>
+
+    <section id="view-dashboard"></section>
+    <section id="view-hoy" style="display:none"></section>
+    <section id="view-skills" style="display:none"></section>
+    <section id="view-reuniones" style="display:none"></section>
+    <section id="view-clientes" style="display:none"></section>
+    <section id="view-ventas" style="display:none"></section>
+    <section id="view-contactos" style="display:none"></section>
+    <section id="view-recordatorios" style="display:none"></section>
+    <section id="view-planificacion" style="display:none"></section>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalBox"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="alarm-bg" id="alarmBg"><div class="alarm" id="alarmBox"></div></div>
+
+<script src="sql-wasm.js"></script>
+<script src="sql-wasm-b64.js"></script>
+<script>
+"use strict";
+var db = null, SQL = null;
+
+/* ---------- utilidades ---------- */
+function $(s){return document.querySelector(s)}
+function $$(s){return Array.from(document.querySelectorAll(s))}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function num(v){var n=parseFloat(v);return isNaN(n)?0:n}
+function pad(n){return String(n).padStart(2,'0')}
+function toYMD(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function todayStr(){return toYMD(new Date())}
+function parseYMD(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function addDays(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r}
+function mondayOf(d){var r=new Date(d);r.setHours(0,0,0,0);var wd=(r.getDay()+6)%7;r.setDate(r.getDate()-wd);return r}
+function fmtShort(s){if(!s)return '';return parseYMD(s).toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})}
+function fmtLong(s){if(!s)return '';return parseYMD(s).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+function weekLabel(ws){var we=addDays(ws,6);return parseYMD(toYMD(ws)).toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' – '+parseYMD(toYMD(we)).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
+function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show')},2200)}
+function base64ToBytes(b64){var bin=atob(b64);var len=bin.length;var bytes=new Uint8Array(len);for(var i=0;i<len;i++)bytes[i]=bin.charCodeAt(i);return bytes}
+
+/* ---------- horario laboral (lunes a viernes 8:00-17:00) ---------- */
+var HORA_INICIO='08:00', HORA_FIN='17:00', HORA_FIN_DISP='17:59';
+function esLaborable(s){var d=parseYMD(s);var w=d.getDay();return w>=1&&w<=5}
+function horaValida(h){if(!h)return true;return h>=HORA_INICIO&&h<=HORA_FIN}
+function validarHorario(fecha,hora){
+  if(fecha&&!esLaborable(fecha)){toast('Elija un día de lunes a viernes');return false}
+  if(hora&&!horaValida(hora)){toast('El horario es de '+HORA_INICIO+' a '+HORA_FIN);return false}
+  return true;
+}
+function ahoraLaborable(){
+  var n=new Date(),w=n.getDay();
+  if(w<1||w>5)return false;
+  var hhmm=pad(n.getHours())+':'+pad(n.getMinutes());
+  return hhmm>=HORA_INICIO&&hhmm<=HORA_FIN_DISP;
+}
+function siguienteLaborable(s){var d=parseYMD(s);while(!(d.getDay()>=1&&d.getDay()<=5))d=addDays(d,1);return toYMD(d)}
+function ajustarALaboral(dt){
+  var d=new Date(dt);
+  var hm=pad(d.getHours())+':'+pad(d.getMinutes());
+  if(hm<HORA_INICIO){d.setHours(8,0,0,0)}
+  else if(hm>HORA_FIN){d.setHours(8,0,0,0);d=addDays(d,1)}
+  while(!(d.getDay()>=1&&d.getDay()<=5)){d=addDays(d,1);d.setHours(8,0,0,0)}
+  return d;
+}
+
+/* ---------- base de datos ---------- */
+function run(sql,params){var st=db.prepare(sql);st.bind(params||[]);st.step();st.free()}
+function query(sql,params){var st=db.prepare(sql);st.bind(params||[]);var rows=[];while(st.step())rows.push(st.getAsObject());st.free();return rows}
+function scalar(sql,params){var r=query(sql,params);return r.length?r[0][Object.keys(r[0])[0]]:null}
+
+function addColIfMissing(table,col,def){
+  try{var cols=query("PRAGMA table_info("+table+")").map(function(r){return r.name});
+    if(cols.indexOf(col)<0)db.run("ALTER TABLE "+table+" ADD COLUMN "+col+" "+def)}catch(e){}
+}
+function createSchema(){
+  db.run("CREATE TABLE IF NOT EXISTS categorias(id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT UNIQUE NOT NULL)");
+  db.run("CREATE TABLE IF NOT EXISTS skills(id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, categoria_id INTEGER, meta_veces_semana INTEGER DEFAULT 0, meta_horas_semana REAL DEFAULT 0, notas TEXT DEFAULT '', activo INTEGER DEFAULT 1)");
+  db.run("CREATE TABLE IF NOT EXISTS contactos(id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, cargo TEXT DEFAULT '', empresa TEXT DEFAULT '', correo TEXT DEFAULT '', telefono TEXT DEFAULT '', notas TEXT DEFAULT '')");
+  db.run("CREATE TABLE IF NOT EXISTS clientes(id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, color TEXT DEFAULT '#2563eb', empresa TEXT DEFAULT '', contacto TEXT DEFAULT '', correo TEXT DEFAULT '', telefono TEXT DEFAULT '', notas TEXT DEFAULT '')");
+  db.run("CREATE TABLE IF NOT EXISTS reuniones(id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, hora TEXT DEFAULT '', titulo TEXT NOT NULL, tema TEXT DEFAULT '', lugar TEXT DEFAULT '', estado TEXT DEFAULT 'Programada', skill_id INTEGER, cliente_id INTEGER, recordar_min INTEGER DEFAULT 0, notas TEXT DEFAULT '')");
+  db.run("CREATE TABLE IF NOT EXISTS reunion_contactos(reunion_id INTEGER, contacto_id INTEGER, PRIMARY KEY(reunion_id,contacto_id))");
+  db.run("CREATE TABLE IF NOT EXISTS actividades_diarias(id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, skill_id INTEGER, cumplido INTEGER DEFAULT 0, horas REAL DEFAULT 0, notas TEXT DEFAULT '', UNIQUE(fecha,skill_id))");
+  db.run("CREATE TABLE IF NOT EXISTS recordatorios(id INTEGER PRIMARY KEY AUTOINCREMENT, titulo TEXT NOT NULL, fecha TEXT NOT NULL, hora TEXT DEFAULT '', tipo TEXT DEFAULT 'Recordatorio', repetir TEXT DEFAULT '', notas TEXT DEFAULT '', reunion_id INTEGER, venta_id INTEGER, activo INTEGER DEFAULT 1)");
+  db.run("CREATE TABLE IF NOT EXISTS ventas(id INTEGER PRIMARY KEY AUTOINCREMENT, cliente_id INTEGER, contacto_id INTEGER, concepto TEXT NOT NULL, monto REAL DEFAULT 0, estado TEXT DEFAULT 'Contactado', probabilidad INTEGER DEFAULT 20, proxima_fecha TEXT DEFAULT '', proxima_hora TEXT DEFAULT '', notas TEXT DEFAULT '', creado TEXT DEFAULT '', fecha_cierre TEXT DEFAULT '')");
+  db.run("CREATE TABLE IF NOT EXISTS seguimiento_ventas(id INTEGER PRIMARY KEY AUTOINCREMENT, venta_id INTEGER, fecha TEXT NOT NULL, tipo TEXT DEFAULT 'Nota', notas TEXT DEFAULT '')");
+  db.run("CREATE INDEX IF NOT EXISTS ix_act_fecha ON actividades_diarias(fecha)");
+  db.run("CREATE INDEX IF NOT EXISTS ix_reu_fecha ON reuniones(fecha)");
+  db.run("CREATE INDEX IF NOT EXISTS ix_rec_fecha ON recordatorios(fecha)");
+  addColIfMissing('categorias','color',"TEXT DEFAULT '#0ea5a4'");
+  addColIfMissing('reuniones','cliente_id','INTEGER');
+  addColIfMissing('reuniones','recordar_min','INTEGER DEFAULT 0');
+  addColIfMissing('recordatorios','venta_id','INTEGER');
+  addColIfMissing('ventas','creado',"TEXT DEFAULT ''");
+  addColIfMissing('ventas','fecha_cierre',"TEXT DEFAULT ''");
+}
+
+/* ---------- persistencia (IndexedDB) ---------- */
+function idb(){return new Promise(function(res,rej){var r=indexedDB.open('miagenda',1);r.onupgradeneeded=function(){r.result.createObjectStore('kv')};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}})}
+function idbSet(key,val){return idb().then(function(d){return new Promise(function(res,rej){var tx=d.transaction('kv','readwrite');tx.objectStore('kv').put(val,key);tx.oncomplete=function(){res()};tx.onerror=function(){rej(tx.error)}})}).catch(function(){})}
+function idbGet(key){return idb().then(function(d){return new Promise(function(res,rej){var rq=d.transaction('kv').objectStore('kv').get(key);rq.onsuccess=function(){res(rq.result)};rq.onerror=function(){rej(rq.error)}})}).catch(function(){return null})}
+function saveDB(){try{idbSet('db',db.export().buffer)}catch(e){console.error(e)}if(backupHandle){clearTimeout(_backupTimer);_backupTimer=setTimeout(writeBackup,600)}}
+
+/* ---------- cálculos ---------- */
+function activeSkills(){return query("SELECT s.*,c.nombre AS categoria,c.color AS cat_color FROM skills s LEFT JOIN categorias c ON c.id=s.categoria_id WHERE s.activo=1 ORDER BY s.nombre")}
+function dayStats(dateStr){
+  var skills=query("SELECT id FROM skills WHERE activo=1");
+  var rows=query("SELECT cumplido,horas FROM actividades_diarias WHERE fecha=?",[dateStr]);
+  var done=0,hrs=0;rows.forEach(function(r){if(r.cumplido)done++;hrs+=num(r.horas)});
+  var total=skills.length;
+  return {total:total,done:done,hours:hrs,pct:total?Math.round(done/total*100):0};
+}
+function weekStats(ws){
+  var s=toYMD(ws),e=toYMD(addDays(ws,7));
+  var plan=query("SELECT COALESCE(SUM(meta_veces_semana),0) v, COALESCE(SUM(meta_horas_semana),0) h FROM skills WHERE activo=1")[0];
+  var real=query("SELECT COUNT(*) c, COALESCE(SUM(horas),0) h FROM actividades_diarias WHERE fecha>=? AND fecha<? AND cumplido=1",[s,e])[0];
+  var timesPlan=num(plan.v),hoursPlan=num(plan.h),timesReal=num(real.c),hoursReal=num(real.h);
+  return {timesPlan:timesPlan,hoursPlan:hoursPlan,timesReal:timesReal,hoursReal:hoursReal,
+    pctV:timesPlan?Math.round(timesReal/timesPlan*100):0,
+    pctH:hoursPlan?Math.round(hoursReal/hoursPlan*100):0};
+}
+
+/* ---------- navegación ---------- */
+var TABTITLES={dashboard:'Dashboard',hoy:'Registro diario',skills:'Skills / Actividades',reuniones:'Reuniones',clientes:'Clientes',ventas:'Ventas y seguimiento',contactos:'Contactos',recordatorios:'Recordatorios y alarmas',planificacion:'Planificación'};
+var currentTab='dashboard';
+function showTab(tab){
+  currentTab=tab;
+  $$('nav a').forEach(function(a){a.classList.toggle('active',a.dataset.tab===tab)});
+  ['dashboard','hoy','skills','reuniones','clientes','ventas','contactos','recordatorios','planificacion'].forEach(function(t){$('#view-'+t).style.display=(t===tab?'':'none')});
+  $('#pageTitle').textContent=TABTITLES[tab];
+  if(tab==='dashboard')renderDashboard();
+  if(tab==='hoy')renderHoy();
+  if(tab==='skills')renderSkills();
+  if(tab==='reuniones')renderReuniones();
+  if(tab==='clientes')renderClientes();
+  if(tab==='ventas')renderVentas();
+  if(tab==='contactos')renderContactos();
+  if(tab==='recordatorios')renderRecordatorios();
+  if(tab==='planificacion')renderPlanificacion();
+}
+$$('nav a').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();showTab(a.dataset.tab)})});
+
+/* ---------- modal ---------- */
+function openModal(html){$('#modalBox').innerHTML=html;$('#modalBg').classList.add('open')}
+function closeModal(){$('#modalBg').classList.remove('open')}
+$('#modalBg').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+/* ---------- colores ---------- */
+var PALETTE=['#0ea5a4','#2563eb','#dc2626','#d97706','#16a34a','#9333ea','#db2777','#0891b2','#65a30d','#ca8a04'];
+var _picked='#0ea5a4';
+function nextColor(){
+  var used={};
+  query("SELECT color FROM categorias WHERE color IS NOT NULL AND color!=''").forEach(function(r){used[r.color]=1});
+  query("SELECT color FROM clientes WHERE color IS NOT NULL AND color!=''").forEach(function(r){used[r.color]=1});
+  for(var i=0;i<PALETTE.length;i++){if(!used[PALETTE[i]])return PALETTE[i]}
+  return PALETTE[0];
+}
+function swatchHtml(sel){
+  _picked=sel||nextColor();
+  var html='<div class="swatches" id="swatchWrap">'+PALETTE.map(function(c){return '<div class="swatch'+(c===_picked?' sel':'')+'" data-c="'+c+'" style="background:'+c+'" onclick="pickSwatch(this)"></div>'}).join('');
+  html+='<input type="color" id="colorPick" value="'+_picked+'" oninput="pickCustom(this.value)" style="width:42px;height:30px;border:none;padding:0;background:none;cursor:pointer;margin-left:4px"></div>';
+  return html;
+}
+function pickSwatch(el){_picked=el.getAttribute('data-c');syncSwatches()}
+function pickCustom(v){_picked=v;syncSwatches()}
+function syncSwatches(){
+  var ws=document.getElementById('swatchWrap');if(!ws)return;
+  Array.prototype.forEach.call(ws.querySelectorAll('.swatch'),function(s){s.classList.toggle('sel',s.getAttribute('data-c')===_picked)});
+  var cp=document.getElementById('colorPick');if(cp)cp.value=_picked;
+}
+function colorDot(hex){return '<span class="dot" style="background:'+(hex||'#cbd5e1')+'"></span>'}
+
+/* ---------- recordatorios / alarmas ---------- */
+var _audioCtx=null;
+function _getCtx(){try{if(!_audioCtx)_audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(_audioCtx.state==='suspended')_audioCtx.resume();return _audioCtx}catch(e){return null}}
+function playBeep(kind){
+  var ctx=_getCtx();if(!ctx)return;
+  var alarm=kind==='Alarma';
+  var n=alarm?6:2;
+  var t0=ctx.currentTime+0.05;
+  for(var i=0;i<n;i++){
+    try{
+      var o=ctx.createOscillator(),g=ctx.createGain();
+      o.type=alarm?'square':'sine';
+      o.frequency.value=alarm?880:660;
+      var t=t0+i*(alarm?0.35:0.25);
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(0.35,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(t);o.stop(t+0.3);
+    }catch(e){}
+  }
+}
+document.addEventListener('click',function(){_getCtx()},true);
+function requestNotif(){
+  if(!("Notification" in window)){toast('Este navegador no permite notificaciones');return}
+  if(Notification.permission==='granted'){toast('Notificaciones ya están activadas');renderRecordatorios();return}
+  Notification.requestPermission().then(function(p){toast(p==='granted'?'Notificaciones activadas':'Permiso denegado');if(currentTab==='recordatorios')renderRecordatorios()});
+}
+function sendNotif(titulo,cuerpo){
+  if(!("Notification" in window)||Notification.permission!=='granted')return;
+  try{new Notification(titulo,{body:cuerpo})}catch(e){}
+}
+var alarmQueue=[],alarmBusy={},alarmShowing=false;
+function checkReminders(){
+  if(!ahoraLaborable())return;
+  var now=new Date(),today=toYMD(now),hhmm=pad(now.getHours())+':'+pad(now.getMinutes());
+  var rows=query("SELECT * FROM recordatorios WHERE activo=1 AND fecha<=? ORDER BY fecha,hora",[today]);
+  rows.forEach(function(r){
+    if(alarmBusy[r.id])return;
+    var due=false;
+    if(r.fecha<today)due=true;
+    else if(!r.hora)due=true;
+    else due=(r.hora<=hhmm);
+    if(!due)return;
+    alarmBusy[r.id]=true;
+    alarmQueue.push(r);
+  });
+  if(!alarmShowing&&alarmQueue.length)nextAlarm();
+}
+function nextAlarm(){
+  if(!alarmQueue.length){alarmShowing=false;return}
+  alarmShowing=true;
+  var r=alarmQueue.shift();
+  playBeep(r.tipo);
+  sendNotif((r.tipo==='Alarma'?'🚨 ':'⏰ ')+r.titulo,(r.hora?r.hora+' · ':'')+(r.notas||''));
+  $('#alarmBox').innerHTML='<div style="padding:24px">'+
+    '<div style="font-size:42px">'+(r.tipo==='Alarma'?'🚨':'🔔')+'</div>'+
+    '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#dc2626;font-weight:800;margin-top:8px">'+(r.tipo==='Alarma'?'Alarma':'Recordatorio')+'</div>'+
+    '<div style="font-size:20px;font-weight:800;margin-top:6px">'+esc(r.titulo)+'</div>'+
+    '<div class="muted" style="margin-top:2px">'+esc(r.fecha)+(r.hora?' · '+esc(r.hora):'')+'</div>'+
+    (r.notas?'<div style="margin-top:10px;font-size:14px">'+esc(r.notas)+'</div>':'')+
+    '<div style="display:flex;gap:8px;margin-top:18px">'+
+    '<button class="btn" onclick="posponerAlarm('+r.id+')">Posponer 5 min</button>'+
+    '<button class="btn primary" onclick="descartarAlarm('+r.id+')">Descartar</button>'+
+    '</div></div>';
+  $('#alarmBg').classList.add('open');
+}
+function posponerAlarm(id){
+  var now=new Date();now.setMinutes(now.getMinutes()+5);
+  run("UPDATE recordatorios SET fecha=?,hora=? WHERE id=?",[toYMD(now),pad(now.getHours())+':'+pad(now.getMinutes()),id]);
+  delete alarmBusy[id];saveDB();closeAlarm();
+}
+function descartarAlarm(id){
+  var r=query("SELECT * FROM recordatorios WHERE id=?",[id])[0];
+  if(r.repetir==='diaria'){var nd=addDays(parseYMD(r.fecha),1);run("UPDATE recordatorios SET fecha=? WHERE id=?",[siguienteLaborable(toYMD(nd)),id])}
+  else if(r.repetir==='semanal')run("UPDATE recordatorios SET fecha=date(fecha,'+7 day') WHERE id=?",[id]);
+  else run("UPDATE recordatorios SET activo=0 WHERE id=?",[id]);
+  delete alarmBusy[id];saveDB();closeAlarm();
+}
+function closeAlarm(){$('#alarmBg').classList.remove('open');if(currentTab==='recordatorios')renderRecordatorios();else if(currentTab==='dashboard')renderDashboard();nextAlarm()}
+
+/* ================= DASHBOARD ================= */
+function renderDashboard(){
+  var today=todayStr();
+  var d=dayStats(today);
+  var ws=mondayOf(new Date());
+  var w=weekStats(ws);
+  var hoy=query("SELECT r.* FROM reuniones r WHERE r.fecha=? ORDER BY r.hora",[today]);
+  var next=query("SELECT r.* FROM reuniones r WHERE r.fecha>=? ORDER BY r.fecha,r.hora LIMIT 6",[today]);
+  var weeks=[];for(var i=-1;i<4;i++){var m=addDays(ws,i*7);weeks.push({label:weekLabel(m),stats:weekStats(m),past:i<0,current:i===0})}
+  var ventasActivas=query("SELECT COUNT(*) c, COALESCE(SUM(monto),0) m FROM ventas WHERE estado NOT IN ('Ganada','Perdida')")[0];
+  var llamadasHoy=query("SELECT COUNT(*) c FROM ventas WHERE estado NOT IN ('Ganada','Perdida') AND proxima_fecha!='' AND proxima_fecha<=?",[today])[0].c;
+
+  var html='';
+  html+='<div class="cards" style="margin-bottom:16px">';
+  html+='<div class="card kpi"><div class="k-label">Cumplimiento de hoy</div><div class="k-val" style="color:'+(d.pct>=70?'var(--good)':d.pct>=40?'var(--warn)':'var(--bad)')+'">'+d.pct+'%</div><div class="k-sub">'+d.done+' de '+d.total+' skills · '+d.hours+' h</div></div>';
+  html+='<div class="card kpi"><div class="k-label">Esta semana · veces</div><div class="k-val">'+w.pctV+'%</div><div class="k-sub">'+w.timesReal+' de '+w.timesPlan+' veces</div></div>';
+  html+='<div class="card kpi"><div class="k-label">Esta semana · horas</div><div class="k-val">'+w.pctH+'%</div><div class="k-sub">'+w.hoursReal+' de '+w.hoursPlan+' h</div></div>';
+  html+='<div class="card kpi"><div class="k-label">Reuniones hoy</div><div class="k-val">'+hoy.length+'</div><div class="k-sub">'+(next.length>hoy.length?(next.length-hoy.length)+' en próximos días':next.length+' próximas en total')+'</div></div>';
+  html+='<div class="card kpi"><div class="k-label">Ventas en curso</div><div class="k-val">'+ventasActivas.c+'</div><div class="k-sub">$'+fmtMoney(ventasActivas.m)+' en pipeline · '+llamadasHoy+' llamadas pendientes</div></div>';
+  html+='</div>';
+
+  html+='<div class="grid" style="grid-template-columns:1fr 1fr;gap:16px">';
+  html+='<div class="card"><h2>Progreso semanal</h2>';
+  html+='<div class="row"><span>Veces (meta semanal)</span><b>'+w.timesReal+' / '+w.timesPlan+'</b></div><div class="bar" style="margin-bottom:10px"><span class="'+(w.pctV>=70?'':w.pctV>=40?'warn':'bad')+'" style="width:'+Math.min(100,w.pctV)+'%"></span></div>';
+  html+='<div class="row"><span>Horas (meta semanal)</span><b>'+w.hoursReal+' / '+w.hoursPlan+' h</b></div><div class="bar" style="margin-bottom:10px"><span class="'+(w.pctH>=70?'':w.pctH>=40?'warn':'bad')+'" style="width:'+Math.min(100,w.pctH)+'%"></span></div>';
+  html+='<div class="row"><span>Rango de la semana</span><b>'+weekLabel(ws)+'</b></div>';
+  html+='</div>';
+
+  html+='<div class="card"><h2>Horas dedicadas (14 días)</h2>'+chartDays('h')+'</div>';
+  html+='</div>';
+
+  html+='<div class="grid" style="grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">';
+  html+='<div class="card"><h2>Cumplimiento diario (14 días)</h2>'+chartDays('p')+'</div>';
+  html+='<div class="card"><h2>Próximas semanas</h2>';
+  weeks.forEach(function(wk){
+    var label=wk.current?'<b>Esta semana</b>':wk.label;
+    var cls=wk.past?'gray':(wk.stats.pctV>=70?'green':'amber');
+    html+='<div class="row"><span>'+label+'</span><span class="pill '+cls+'">'+(wk.past||wk.current?wk.stats.pctV+'%':'planificado')+'</span></div>';
+    html+='<div style="margin-bottom:6px"><div class="bar"><span style="width:'+Math.min(100,(wk.past||wk.current?wk.stats.pctV:100))+'%"></span></div></div>';
+  });
+  html+='</div>';
+  html+='</div>';
+
+  var reminders=query("SELECT * FROM recordatorios WHERE activo=1 AND fecha>=? ORDER BY fecha,hora LIMIT 8",[today]);
+  html+='<div class="card" style="margin-top:16px"><h2>🔔 Próximos recordatorios y alarmas</h2>';
+  if(reminders.length===0){html+='<div class="muted">Sin recordatorios próximos. <a href="#" onclick="showTab(\'recordatorios\');return false">Crear uno</a></div>'}
+  else{
+    reminders.forEach(function(r){
+      var c=r.tipo==='Alarma'?'#dc2626':'#2563eb';
+      html+='<div class="row"><span><span class="dot" style="background:'+c+'"></span><b>'+esc(r.titulo)+'</b></span><span style="font-size:12.5px;color:var(--muted)">'+fmtShort(r.fecha)+(r.hora?' · '+esc(r.hora):'')+'</span><span class="rem-type" style="background:'+c+'22;color:'+c+'">'+esc(r.tipo)+'</span></div>';
+    });
+  }
+  html+='</div>';
+
+  html+='<div class="card" style="margin-top:16px"><h2>Próximas reuniones</h2>';
+  if(next.length===0){html+='<div class="empty"><div class="big">📅</div>No hay reuniones programadas.<br><button class="btn primary" style="margin-top:10px" onclick="showTab(\'reuniones\')">Agendar reunión</button></div>'}
+  else{html+='<table><tr><th>Fecha</th><th>Hora</th><th>Reunión</th><th>Participantes</th><th>Estado</th></tr>';
+    next.forEach(function(r){html+=meetingRowHtml(r)});
+    html+='</table>'}
+  html+='</div>';
+
+  $('#view-dashboard').innerHTML=html;
+}
+
+function chartDays(kind){
+  var today=new Date();var cols=[];
+  for(var i=13;i>=0;i--){var d=addDays(today,-i);var ds=toYMD(d);var st=dayStats(ds);
+    var val=kind==='p'?st.pct:st.hours;
+    var max=kind==='p'?100:Math.max(1,st.hours);
+    var h=kind==='p'?val:Math.round(val/8*100);
+    cols.push('<div class="col"><div class="val">'+(kind==='p'?val+'%':st.hours)+'</div><div class="b'+(kind==='h'?' h':'')+'" style="height:'+Math.max(2,Math.min(100,h))+'%"></div><div class="lbl">'+pad(d.getDate())+'</div></div>');
+  }
+  return '<div class="chart">'+cols.join('')+'</div>';
+}
+
+function meetingRowHtml(r){
+  var cs=query("SELECT c.nombre,c.cargo FROM reunion_contactos rc JOIN contactos c ON c.id=rc.contacto_id WHERE rc.reunion_id=?",[r.id]);
+  var people=cs.map(function(c){return c.nombre+(c.cargo?' ('+c.cargo+')':'')}).join(', ');
+  var estado=r.estado||'Programada';
+  var cls=estado==='Realizada'?'green':estado==='Cancelada'?'red':'amber';
+  var cliente=r.cliente_id?query("SELECT * FROM clientes WHERE id=?",[r.cliente_id])[0]:null;
+  var rem=(r.recordar_min>0)?' <span title="Recordatorio '+r.recordar_min+' min antes">🔔</span>':'';
+  var cliPill=cliente?'<div style="margin-top:3px"><span class="pill" style="background:'+(cliente.color||'#2563eb')+'22;color:'+(cliente.color||'#2563eb')+'">'+esc(cliente.nombre)+'</span></div>':'';
+  return '<tr><td>'+fmtShort(r.fecha)+'</td><td>'+esc(r.hora||'—')+'</td><td><b>'+esc(r.titulo)+'</b>'+rem+(r.tema?'<div class="muted" style="font-size:12px">'+esc(r.tema)+'</div>':'')+cliPill+'</td><td style="max-width:220px">'+esc(people||'—')+'</td><td><span class="pill '+cls+'">'+esc(estado)+'</span></td></tr>';
+}
+
+/* ================= REGISTRO DIARIO ================= */
+var hoyFecha=todayStr();
+function renderHoy(){
+  var dateStr=hoyFecha;
+  var skills=activeSkills();
+  var rows=query("SELECT * FROM actividades_diarias WHERE fecha=?",[dateStr]);
+  var bySkill={};rows.forEach(function(r){bySkill[r.skill_id]=r});
+  var reuniones=query("SELECT * FROM reuniones WHERE fecha=? ORDER BY hora",[dateStr]);
+
+  var html='<div class="toolbar"><button class="btn" onclick="moveHoy(-1)">‹</button>'+
+    '<input type="date" id="hoyDate" value="'+dateStr+'" onchange="hoyFecha=this.value;renderHoy()">'+
+    '<button class="btn" onclick="moveHoy(1)">›</button>'+
+    '<span class="muted" style="margin-left:8px">'+fmtLong(dateStr)+'</span>'+
+    (esLaborable(dateStr)?'':' <span class="pill gray">fin de semana</span>')+
+    '<span style="margin-left:auto" class="saved" id="hoyStatus"></span></div>';
+
+  html+='<div class="card" style="margin-bottom:16px"><h2>Reuniones del día ('+reuniones.length+')</h2>';
+  if(reuniones.length===0){html+='<div class="muted">No hay reuniones este día. <a href="#" onclick="showTab(\'reuniones\');return false">Agendar una</a></div>'}
+  else{html+='<table><tr><th>Fecha</th><th>Hora</th><th>Reunión</th><th>Participantes</th><th>Estado</th></tr>';reuniones.forEach(function(r){html+=meetingRowHtml(r)});html+='</table>'}
+  html+='</div>';
+
+  html+='<div class="card"><h2>Mis actividades · cumplimiento del día</h2>';
+  if(skills.length===0){html+='<div class="empty"><div class="big">🎯</div>Aún no tienes skills registrados.<br><button class="btn primary" style="margin-top:10px" onclick="showTab(\'skills\')">Crear mi primer skill</button></div>'}
+  else{
+    html+='<div class="act-row" style="border-bottom:2px solid var(--line);font-size:12px;color:var(--muted);text-transform:uppercase"><span>Actividad</span><span>Horas</span><span>Cumplido</span><span></span></div>';
+    skills.forEach(function(s){
+      var rec=bySkill[s.id]||{cumplido:0,horas:0,notas:''};
+      html+='<div class="act-row" data-sid="'+s.id+'">';
+      html+='<div><div class="nm">'+esc(s.nombre)+'</div>'+(s.categoria?'<div class="cat">'+colorDot(s.cat_color)+esc(s.categoria)+' · meta '+s.meta_veces_semana+'×/sem</div>':'')+'</div>';
+      html+='<input type="number" min="0" step="0.5" value="'+num(rec.horas)+'" onchange="saveAct('+s.id+',\'horas\',this.value)">';
+      html+='<label class="checkline"><input type="checkbox" class="chk" '+(rec.cumplido?'checked':'')+' onchange="saveAct('+s.id+',\'cumplido\',this.checked?1:0)"><span>Hecho</span></label>';
+      html+='<button class="btn sm ghost" onclick="editActNota('+s.id+')">📝</button>';
+      html+='</div>';
+      html+='<div class="row" data-nota="'+s.id+'" style="padding:2px 0 12px 12px;'+(rec.notas?'':'display:none')+'"><span class="muted" style="font-size:13px">📝 '+esc(rec.notas||'')+'</span></div>';
+    });
+  }
+  html+='</div>';
+  $('#view-hoy').innerHTML=html;
+}
+function moveHoy(n){hoyFecha=toYMD(addDays(parseYMD(hoyFecha),n));renderHoy()}
+function saveAct(sid,field,val){
+  var dateStr=hoyFecha;
+  var exists=scalar("SELECT COUNT(*) FROM actividades_diarias WHERE fecha=? AND skill_id=?",[dateStr,sid]);
+  var rec=query("SELECT * FROM actividades_diarias WHERE fecha=? AND skill_id=?",[dateStr,sid])[0]||{horas:0,cumplido:0,notas:''};
+  if(field==='horas')rec.horas=num(val);
+  if(field==='cumplido')rec.cumplido=val;
+  if(exists){run("UPDATE actividades_diarias SET horas=?,cumplido=? WHERE fecha=? AND skill_id=?",[rec.horas,rec.cumplido,dateStr,sid])}
+  else{run("INSERT INTO actividades_diarias(fecha,skill_id,horas,cumplido,notas) VALUES(?,?,?,?,?)",[dateStr,sid,rec.horas,rec.cumplido,rec.notas])}
+  saveDB();
+  var st=$('#hoyStatus');if(st){st.textContent='✓ Guardado';setTimeout(function(){if(st)st.textContent=''},1500)}
+}
+function editActNota(sid){
+  var dateStr=hoyFecha;
+  var rec=query("SELECT * FROM actividades_diarias WHERE fecha=? AND skill_id=?",[dateStr,sid])[0]||{notas:''};
+  openModal('<div class="mh"><h3>Nota de la actividad</h3><button class="btn sm ghost" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb"><div class="field"><label>Notas / observaciones</label><textarea id="notaTxt" placeholder="¿Qué hiciste hoy? Resultados, pendientes...">'+esc(rec.notas)+'</textarea></div></div>'+
+    '<div class="mf"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="guardarNota('+sid+')">Guardar</button></div>');
+}
+function guardarNota(sid){
+  var dateStr=hoyFecha;var nota=$('#notaTxt').value;
+  var exists=scalar("SELECT COUNT(*) FROM actividades_diarias WHERE fecha=? AND skill_id=?",[dateStr,sid]);
+  if(exists)run("UPDATE actividades_diarias SET notas=? WHERE fecha=? AND skill_id=?",[nota,dateStr,sid]);
+  else run("INSERT INTO actividades_diarias(fecha,skill_id,horas,cumplido,notas) VALUES(?,?,0,0,?)",[dateStr,sid,nota]);
+  saveDB();closeModal();renderHoy();
+}
+
+/* ================= SKILLS ================= */
+function renderSkills(){
+  var cats=query("SELECT * FROM categorias ORDER BY nombre");
+  var skills=query("SELECT s.*,c.nombre AS categoria,c.color AS cat_color FROM skills s LEFT JOIN categorias c ON c.id=s.categoria_id ORDER BY s.activo DESC, s.nombre");
+  var html='<div class="toolbar"><button class="btn primary" onclick="openSkillModal()">＋ Nuevo skill</button></div>';
+  html+='<div class="card"><table><tr><th>Skill / Actividad</th><th>Categoría</th><th>Meta semanal</th><th>Horas/sem</th><th>Estado</th><th></th></tr>';
+  if(skills.length===0){html+='<tr><td colspan="6"><div class="empty"><div class="big">🎯</div>No hay skills. Crea el primero con el botón de arriba.</div></td></tr>'}
+  skills.forEach(function(s){
+    html+='<tr><td><b>'+esc(s.nombre)+'</b>'+(s.notas?'<div class="muted" style="font-size:12px">'+esc(s.notas)+'</div>':'')+'</td>'+
+      '<td>'+(s.categoria?colorDot(s.cat_color)+esc(s.categoria):'—')+'</td>'+
+      '<td>'+s.meta_veces_semana+'×/sem</td>'+
+      '<td>'+num(s.meta_horas_semana)+' h</td>'+
+      '<td>'+(s.activo?'<span class="pill green">Activo</span>':'<span class="pill gray">Inactivo</span>')+'</td>'+
+      '<td style="text-align:right;white-space:nowrap"><button class="btn sm" onclick="openSkillModal('+s.id+')">Editar</button> <button class="btn sm danger" onclick="delSkill('+s.id+')">Eliminar</button></td></tr>';
+  });
+  html+='</table></div>';
+
+  html+='<div class="card" style="margin-top:16px"><h2>Categorías</h2><div id="catsList">';
+  cats.forEach(function(c){html+='<span class="tag">'+colorDot(c.color)+esc(c.nombre)+' <input type="color" value="'+(c.color||'#0ea5a4')+'" onchange="setCatColor('+c.id+',this.value)" style="width:22px;height:18px;border:none;padding:0;background:none;cursor:pointer" title="Cambiar color"> <a href="#" onclick="delCat('+c.id+');return false" style="color:var(--bad)">✕</a></span>'});
+  if(cats.length===0)html+='<span class="muted">Sin categorías aún.</span>';
+  html+='</div><div style="margin-top:10px;display:flex;gap:8px"><input id="newCat" placeholder="Nueva categoría (ej. Trabajo, Salud...)" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:9px"><input type="color" id="newCatColor" value="'+nextColor()+'" style="width:42px;height:34px;border:1px solid var(--line);border-radius:9px;padding:2px;cursor:pointer" title="Color"><button class="btn" onclick="addCat()">Agregar</button></div></div>';
+
+  $('#view-skills').innerHTML=html;
+}
+function openSkillModal(id){
+  var cats=query("SELECT * FROM categorias ORDER BY nombre");
+  var s=id?query("SELECT * FROM skills WHERE id=?",[id])[0]:{nombre:'',categoria_id:null,meta_veces_semana:3,meta_horas_semana:0,notas:'',activo:1};
+  var opt='<option value="">— sin categoría —</option>'+cats.map(function(c){return '<option value="'+c.id+'"'+(s.categoria_id===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>'}).join('');
+  openModal('<div class="mh"><h3>'+(id?'Editar skill':'Nuevo skill')+'</h3><button class="btn sm ghost" onclick="closeModal()">✕</button></div>'+
+  '<div class="mb">'+
+    '<div class="field"><label>Nombre de la actividad *</label><input id="sk_nombre" value="'+esc(s.nombre)+'" placeholder="Ej. Estudiar inglés"></div>'+
+    '<div class="f2"><div class="field"><label>Categoría</label><select id="sk_cat">'+opt+'</select></div>'+
+    '<div class="field"><label>Estado</label><select id="sk_activo"><option value="1"'+(s.activo?' selected':'')+'>Activo</option><option value="0"'+(s.activo?'':' selected')+'>Inactivo</option></select></div></div>'+
+    '<div class="f2"><div class="field"><label>Meta: veces por semana</label><input id="sk_veces" type="number" min="0" step="1" value="'+s.meta_veces_semana+'"></div>'+
+    '<div class="field"><label>Meta: horas por semana</label><input id="sk_horas" type="number" min="0" step="0.5" value="'+num(s.meta_horas_semana)+'"></div></div>'+
+    '<div class="field"><label>Notas</label><textarea id="sk_notas" placeholder="Descripción, objetivo...">'+esc(s.notas)+'</textarea></div>'+
+  '</div>'+
+  '<div class="mf"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="guardarSkill('+(id||'null')+')">Guardar</button></div>');
+}
+function guardarSkill(id){
+  var nombre=$('#sk_nombre').value.trim();
+  if(!nombre){toast('Escribe un nombre');return}
+  var cat=$('#sk_cat').value||null,veces=parseInt($('#sk_veces').value)||0,horas=num($('#sk_horas').value),notas=$('#sk_notas').value,activo=parseInt($('#sk_activo').value);
+  if(id)run("UPDATE skills SET nombre=?,categoria_id=?,meta_veces_semana=?,meta_horas_semana=?,notas=?,activo=? WHERE id=?",[nombre,cat,veces,horas,notas,activo,id]);
+  else run("INSERT INTO skills(nombre,categoria_id,meta_veces_semana,meta_horas_semana,notas,activo) VALUES(?,?,?,?,?,?)",[nombre,cat,veces,horas,notas,activo]);
+  saveDB();closeModal();renderSkills();toast('Skill guardado');
+}
+function delSkill(id){if(confirm('¿Eliminar este skill y su historial?')){run("DELETE FROM skills WHERE id=?",[id]);saveDB();renderSkills();toast('Eliminado')}}
+function addCat(){var n=$('#newCat').value.trim();if(!n)return;var col=($('#newCatColor')?$('#newCatColor').value:nextColor())||nextColor();try{run("INSERT INTO categorias(nombre,color) VALUES(?,?)",[n,col]);saveDB();renderSkills()}catch(e){toast('Esa categoría ya existe')}}
+function delCat(id){if(confirm('¿Eliminar esta categoría?')){run("DELETE FROM categorias WHERE id=?",[id]);saveDB();renderSkills()}}
+function setCatColor(id,color){run("UPDATE categorias SET color=? WHERE id=?",[color,id]);saveDB();renderSkills()}
+
+/* ================= CONTACTOS ================= */
+function renderContactos(){
+  var cs=query("SELECT * FROM contactos ORDER BY nombre");
+  var html='<div class="toolbar"><input id="buscaCont" placeholder="🔍 Buscar contacto..." oninput="filterContactos()" style="flex:1;max-width:320px;padding:8px 10px;border:1px solid var(--line);border-radius:9px"><button class="btn primary" onclick="openContactoModal()">＋ Nuevo contacto</button></div>';
+  html+='<div class="cards" id="contGrid">';
+  if(cs.length===0)html+='<div class="card empty" style="grid-column:1/-1"><div class="big">👥</div>Aún no hay contactos.</div>';
+  cs.forEach(function(c){
+    html+='<div class="card" data-search="'+esc((c.nombre+' '+c.cargo+' '+c.empresa+' '+c.correo).toLowerCase())+'">'+
+      '<div style="display:flex;justify-content:space-between"><div><div style="font-weight:700;font-size:16px">'+esc(c.nombre)+'</div>'+(c.cargo?'<div style="color:var(--accent);font-weight:600;font-size:13px">'+esc(c.cargo)+'</div>':'')+(c.empresa?'<div class="muted" style="font-size:13px">'+esc(c.empresa)+'</div>':'')+'</div>'+
+      '<div class="muted" style="font-size:13px;font-weight:700">'+c.nombre.charAt(0).toUpperCase()+'</div></div>'+
+      '<div style="margin-top:10px;font-size:13px">'+(c.correo?'<div>✉️ '+esc(c.correo)+'</div>':'')+(c.telefono?'<div>📞 '+esc(c.telefono)+'</div>':'')+(c.notas?'<div class="muted">📝 '+esc(c.notas)+'</div>':'')+'</div>'+
+      '<div style="margin-top:12px;display:flex;gap:6px"><button class="btn sm" onclick="openContactoModal('+c.id+')">Editar</button><button class="btn sm danger" onclick="delContacto('+c.id+')">Eliminar</button></div></div>';
+  });
+  html+='</div>';
+  $('#view-contactos').innerHTML=html;
+}
+function filterContactos(){var q=$('#buscaCont').value.toLowerCase();$$('#contGrid .card[data-search]').forEach(function(c){c.style.display=c.dataset.search.indexOf(q)>=0?'':'none'})}
+function openContactoModal(id){
+  var c=id?query("SELECT * FROM contactos WHERE id=?",[id])[0]:{nombre:'',cargo:'',empresa:'',correo:'',telefono:'',notas:''};
+  openModal('<div class="mh"><h3>'+(id?'Editar contacto':'Nuevo contacto')+'</h3><button class="btn sm ghost" onclick="closeModal()">✕</button></div>'+
+  '<div class="mb">'+
+    '<div class="field"><label>Nombre completo *</label><input id="ct_nombre" value="'+esc(c.nombre)+'"></div>'+
+    '<div class="f2"><div class="field"><label>Cargo</label><input id="ct_cargo" value="'+esc(c.cargo)+'" placeholder="Ej. Gerente de Proyectos"></div>'+
+    '<div class="field"><label>Empresa / Organización</label><input id="ct_empresa" value="'+esc(c.empresa)+'"></div></div>'+
+    '<div class="f2"><div class="field"><label>Correo electrónico</label><input id="ct_correo" value="'+esc(c.correo)+'" placeholder="correo@ejemplo.com"></div>'+
+    '<div class="field"><label>Teléfono / contacto</label><input id="ct_tel" value="'+esc(c.telefono)+'"></div></div>'+
+    '<div class="field"><label>Notas</label><textarea id="ct_notas">'+esc(c.notas)+'</textarea></div>'+
+  '</div>'+
+  '<div class="mf"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="guardarContacto('+(id||'null')+')">Guardar</button></div>');
+}
+function guardarContacto(id){
+  var n=$('#ct_nombre').value.trim();if(!n){toast('Escribe un nombre');return}
+  var d=[n,$('#ct_cargo').value,$('#ct_empresa').value,$('#ct_correo').value,$('#ct_tel').value,$('#ct_notas').value];
+  if(id)run("UPDATE contactos SET nombre=?,cargo=?,empresa=?,correo=?,telefono=?,notas=? WHERE id=?",d.concat([id]));
+  else run("INSERT INTO contactos(nombre,cargo,empresa,correo,telefono,notas) VALUES(?,?,?,?,?,?)",d);
+  saveDB();closeModal();renderContactos();toast('Contacto guardado');
+}
+function delContacto(id){if(confirm('¿Eliminar contacto?')){run("DELETE FROM contactos WHERE id=?",[id]);saveDB();renderContactos()}}
+
+/* ================= CLIENTES ================= */
+function renderClientes(){
+  var cs=query("SELECT * FROM clientes ORDER BY nombre");
+  var html='<div class="toolbar"><input id="buscaCli" placeholder="🔍 Buscar cliente..." oninput="filterClientes()" style="flex:1;max-width:320px;padding:8px 10px;border:1px solid var(--line);border-radius:9px"><button class="btn primary" onclick="openClienteModal()">＋ Nuevo cliente</button></div>';
+  html+='<div class="cards" id="cliGrid">';
+  if(cs.length===0)html+='<div class="card empty" style="grid-column:1/-1"><div class="big">🏢</div>Aún no hay clientes.</div>';
+  cs.forEach(function(c){
+    html+='<div class="card cliente-card" style="border-left-color:'+(c.color||'#2563eb')+'" data-search="'+esc((c.nombre+' '+c.empresa+' '+c.contacto+' '+c.correo).toLowerCase())+'">'+
+      '<div style="display:flex;justify-content:space-between"><div><div style="font-weight:700;font-size:16px">'+esc(c.nombre)+'</div>'+(c.empresa?'<div class="muted" style="font-size:13px">'+esc(c.empresa)+'</div>':'')+'</div>'+colorDot(c.color)+'</div>'+
+      '<div style="margin-top:10px;font-size:13px">'+(c.contacto?'<div>👤 '+esc(c.contacto)+'</div>':'')+(c.correo?'<div>✉️ '+esc(c.correo)+'</div>':'')+(c.telefono?'<div>📞 '+esc(c.telefono)+'</div>':'')+(c.notas?'<div class="muted">📝 '+esc(c.notas)+'</div>':'')+'</div>'+
+      '<div style="margin-top:12px;display:flex;gap:6px"><button class="btn sm" onclick="openClienteModal('+c.id+')">Editar</button><button class="btn sm danger" onclick="delCliente('+c.id+')">Eliminar</button></div></div>';
+  });
+  html+='</div>';
+  $('#view-clientes').innerHTML=html;
+}
+function filterClientes(){var q=$('#buscaCli').value.toLowerCase();$$('#cliGrid .card[data-search]').forEach(function(c){c.style.display=c.dataset.search.indexOf(q)>=0?'':'none'})}
+function openClienteModal(id){
+  var c=id?query("SELECT * FROM clientes WHERE id=?",[id])[0]:{nombre:'',color:'',empresa:'',contacto:'',correo:'',telefono:'',notas:''};
+  openModal('<div class="mh"><h3>'+(id?'Editar cliente':'Nuevo cliente')+'</h3><button class="btn sm ghost" onclick="closeModal()">✕</button></div>'+
+  '<div class="mb">'+
+    '<div class="field"><label>Nombre del cliente / empresa *</label><input id="cl_nombre" value="'+esc(c.nombre)+'"></div>'+
+    '<div class="field"><label>Color</label>'+swatchHtml(c.color||'')+'</div>'+
+    '<div class="f2"><div class="field"><label>Persona de contacto</label><input id="cl_contacto" value="'+esc(c.contacto)+'"></div>'+
+    '<div class="field"><label>Empresa / razón social</label><input id="cl_empresa" value="'+esc(c.empresa)+'"></div></div>'+
+    '<div class="f2"><div class="field"><label>Correo</label><input id="cl_correo" value="'+esc(c.correo)+'"></div>'+
+    '<div class="field"><label>Teléfono</label><input id="cl_tel" value="'+esc(c.telefono)+'"></div></div>'+
+    '<div class="field"><label>Notas</label><textarea id="cl_notas">'+esc(c.notas)+'</textarea></div>'+
+  '</div>'+
+  '<div class="mf"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="guardarCliente('+(id||'null')+')">Guardar</button></div>');
+}
+function guardarCliente(id){
+  var n=$('#cl_nombre').value.trim();if(!n){toast('Escribe un nombre');return}
+  var d=[n,_picked,$('#cl_empresa').value,$('#cl_contacto').value,$('#cl_correo').value,$('#cl_tel').value,$('#cl_notas').value];
+  if(id)run("UPDATE clientes SET nombre=?,color=?,empresa=?,contacto=?,correo=?,telefono=?,notas=? WHERE id=?",d.concat([id]));
+  else run("INSERT INTO clientes(nombre,color,empresa,contacto,correo,telefono,notas) VALUES(?,?,?,?,?,?,?)",d);
+  saveDB();closeModal();renderClientes();toast('Cliente guardado');
+}
+function delCliente(id){if(confirm('¿Eliminar este cliente?')){run("DELETE FROM clientes WHERE id=?",[id]);saveDB();renderClientes()}}
+
+/* ================= RECORDATORIOS ================= */
+function renderRecordatorios(){
+  var rows=query("SELECT * FROM recordatorios ORDER BY activo DESC, fecha, hora");
+  var perm=("Notification" in window)?Notification.permission:'no';
+  var html='<div class="toolbar"><button class="btn primary" onclick="openRecordatorioModal()">＋ Nuevo recordatorio / alarma</button>'+
+    '<button class="btn" onclick="requestNotif()">🔔 Notificaciones</button>'+
+    '<span class="muted" style="font-size:12.5px">'+(perm==='granted'?'✅ Notificaciones de Windows activadas':perm==='denied'?'⚠️ Notificaciones bloqueadas (habilítalas en el navegador)':'Notificaciones: se pedirá permiso al crear la primera')+'</span></div>';
+
+  html+='<div class="card"><h2>Recordatorios y alarmas</h2><table><tr><th>Recordatorio</th><th>Cuándo</th><th>Tipo</th><th>Repetición</th><th>Estado</th><th></th></tr>';
+  if(rows.length===0)html+='<tr><td colspan="6"><div class="empty"><div class="big">🔔</div>No hay recordatorios. Crea uno para que te avise con sonido.</div></td></tr>';
+  rows.forEach(function(r){
+    var tcolor=r.tipo==='Alarma'?'#dc2626':'#2563eb';
+    html+='<tr><td><b>'+esc(r.titulo)+'</b>'+(r.notas?'<div class="muted" style="font-size:12px">'+esc(r.notas)+'</div>':'')+'</td>'+
+      '<td>'+fmtShort(r.fecha)+(r.hora?' · '+esc(r.hora):'')+'</td>'+
+      '<td><span class="rem-type" style="background:'+tcolor+'22;color:'+tcolor+'">'+esc(r.tipo)+'</span></td>'+
+      '<td>'+esc(r.repetir==='diaria'?'Diaria':r.repetir==='semanal'?'Semanal':'—')+'</td>'+
+      '<td>'+(r.activo?'<span class="pill green">Activo</span>':'<span class="pill gray">Inactivo</span>')+'</td>'+
+      '<td style="text-align:right;white-space:nowrap"><button class="btn sm" onclick="openRecordatorioModal('+r.id+')">Editar</button> <button class="btn sm danger" onclick="delRecordatorio('+r.id+')">✕</button></td></tr>';
+  });
+  html+='</table></div>';
+  html+='<div class="card" style="margin-top:16px"><h2>💡 Cómo funciona</h2><div class="muted" style="font-size:13.5px;line-height:1.6">Deja la app abierta (en una pestaña) y, al llegar la hora, sonará un aviso y aparecerá una ventana. Si activas las notificaciones, también recibirás un aviso de Windows. Un <b>Recordatorio</b> es un aviso suave; una <b>Alarma</b> suena más fuerte y repetido. También puedes agregar un recordatorio automático a cada reunión.</div></div>';
+  $('#view-recordatorios').innerHTML=html;
+}
+function openRecordatorioModal(id){
+  var r=id?query("SELECT * FROM recordatorios WHERE id=?",[id])[0]:{titulo:'',fecha:todayStr(),hora:'',tipo:'Recordatorio',repetir:'',notas:''};
+  openModal('<div class="mh"><h3>'+(id?'Editar recordatorio':'Nuevo recordatorio')+'</h3><button class="btn sm ghost" onclick="closeModal()">✕</button></div>'+
+  '<div class="mb">'+
+    '<div class="field"><label>Título *</label><input id="rm_titulo" value="'+esc(r.titulo)+'" placeholder="Ej. Llamar al proveedor"></div>'+
+    '<div class="f2"><div class="field"><label>Fecha</label><input id="rm_fecha" type="date" value="'+r.fecha+'"></div>'+
+    '<div class="field"><label>Hora (opcional)</label><input id="rm_hora" type="time" min="08:00" max="17:00" value="'+esc(r.hora||'')+'"></div></div>'+
+    '<div class="f2"><div class="field"><label>Tipo</label><select id="rm_tipo">'+['Recordatorio','Alarma'].map(function(t){return '<option'+(r.tipo===t?' selected':'')+'>'+t+'</option>'}).join('')+'</select></div>'+
+    '<div class="field"><label>Repetición</label><select id="rm_rep">'+[['','No repetir'],['diaria','Diaria'],['semanal','Semanal']].map(function(p){return '<option value="'+p[0]+'"'+(r.repetir===p[0]?' selected':'')+'>'+p[1]+'</option>'}).join('')+'</select></div></div>'+
+    '<div class="field"><label>Notas</label><textarea id="rm_notas">'+esc(r.notas)+'</textarea></div>'+
+  '</div>'+
+  '<div class="mf"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="guardarRecordatorio('+(id||'null')+')">Guardar</button></div>');
+}
+function guardarRecordatorio(id){
+  var t=$('#rm_titulo').value.trim();if(!t){toast('Escribe un título');return}
+  if(!validarHorario($('#rm_fecha').value,$('#rm_hora').value))return;
+  var d=[t,$('#rm_fecha').value,$('#rm_hora').value,$('#rm_tipo').value,$('#rm_rep').value,$('#rm_notas').value];
+  if(id)run("UPDATE recordatorios SET titulo=?,fecha=?,hora=?,tipo=?,repetir=?,notas=? WHERE id=?",d.concat([id]));
+  else run("INSERT INTO recordatorios(titulo,fecha,hora,tipo,repetir,notas) VALUES(?,?,?,?,?,?)",d);
+  saveDB();closeModal();renderRecordatorios();toast('Recordatorio guardado');
+  if("Notification" in window && Notification.permission==='default')Notification.requestPermission();
+}
+function delRecordatorio(id){if(confirm('¿Eliminar este recordatorio?')){run("DELETE FROM recordatorios WHERE id=?",[id]);saveDB();renderRecordatorios()}}
+
+/* ================= VENTAS ================= */
+var ESTADOS=[['Prospección','#64748b'],['Contactado','#2563eb'],['Propuesta enviada','#d97706'],['Negociación','#9333ea'],['Ganada','#16a34a'],['Perdida','#dc2626']];
+function estadoColor(n){for(var i=0;i<ESTADOS.length;i++){if(ESTADOS[i][0]===n)return ESTADOS[i][1]}return '#64748b'}
+function estadoPill(n){var c=estadoColor(n);return '<span class="pill" style="background:'+c+'22;color:'+c+'">'+esc(n)+'</span>'}
+function fmtMoney(n){n=num(n);return n.toLocaleString('es-ES',{maximumFractionDigits:0})}
+var TIPS=[
+ ['Cómo llegar a los clientes','Define tu cliente ideal','No vendas a todos: identifica quién se beneficia más de tu producto o servicio (sector, tamaño, cargo) y enfócate en ese perfil.'],
+ ['Cómo llegar a los clientes','Investiga antes de llamar','Revisa la web y las redes de tu prospecto. Llega con algo personalizado, no con un guion genérico.'],
+ ['Cómo llegar a los clientes','Usa tu red de referidos','Pide recomendaciones a tus clientes actuales: una referencia abre más puertas que muchas llamadas en frío.'],
+ ['Cómo llegar a los clientes','Primer contacto breve y con valor','En el primer contacto no vendas: ofrece una idea útil y agenda una reunión corta.'],
+ ['Cómo llegar a los clientes','Sé constante','La mayoría de las ventas se cierran después del 5º contacto. No te rindas al primer "no".'],
+ ['Cómo llegar a los clientes','Encuentra la puerta de entrada','Contacta primero a quien tiene el problema, aunque no sea quien firma; te llevará al decisor.'],
+ ['Cómo cerrar la venta','Escucha más de lo que hablas','Descubre el problema real del cliente y muestra cómo tu producto lo resuelve.'],
+ ['Cómo cerrar la venta','Usa preguntas de cierre suave','"¿Le funciona el martes o el jueves?" en lugar de "¿le interesa?".'],
+ ['Cómo cerrar la venta','Maneja las objeciones con calma','Una objeción no es un "no": es una petición de más información.'],
+ ['Cómo cerrar la venta','Crea urgencia real','Oferta con fecha límite, descuento por pronto pago o cupo limitado.'],
+ ['Cómo cerrar la venta','Resume los beneficios','Antes de pedir el sí, repite en una frase los 3 beneficios que más le importaron.'],
+ ['Cómo cerrar la venta','Pide el compromiso por escrito','Una cotización o contrato firmado evita malentendidos y cierra de forma segura.'],
+ ['Seguimiento y confianza','Haz seguimiento en 24-48 h','Tras cada contacto, escribe el acuerdo y la próxima acción. La constancia cierra ventas.'],
+ ['Seguimiento y confianza','Cumple lo que prometes','Si dijiste que enviarías información, envíala ese mismo día. La confianza vende.'],
+ ['Seguimiento y confianza','Nunca dejes una venta tibia','Agenda siempre una próxima fecha antes de terminar. Una venta sin seguimiento se pierde.'],
+ ['Seguimiento y confianza','Documenta todo','Registra llamadas, correos y acuerdos: así sabrás en qué estado está cada negociación.'],
+ ['Seguimiento y confianza','Cuida al cliente después de cerrar','Un cliente satisfecho vuelve a comprar y te recomienda.'],
+ ['Seguimiento y confianza','Aprende de cada venta perdida','Pregunta por qué no se cerró: es la mejor escuela de ventas.']
+];
+
+function renderVentas(){
+  var hoy=todayStr();
+  var ventas=query("SELECT v.*,c.nombre AS cliente,c.color AS cli_color,ct.nombre AS contacto FROM ventas v LEFT JOIN clientes c ON c.id=v.cliente_id LEFT JOIN contactos ct ON ct.id=v.contacto_id ORDER BY v.id DESC");
+  var activas=ventas.filter(function(v){return v.estado!=='Ganada'&&v.estado!=='Perdida'});
+  var pipeline=activas.reduce(function(s,v){return s+num(v.monto)},0);
+  var ponderado=activas.reduce(function(s,v){return s+num(v.monto)*num(v.probabilidad)/100},0);
+  var ganadas=ventas.filter(function(v){return v.estado==='Ganada'}).length;
+  var llamadas=activas.filter(function(v){return v.proxima_fecha&&v.proxima_fecha<=hoy}).length;
+
+  var html='<div class="toolbar"><button class="btn primary" onclick="openVentaModal()">＋ Nueva venta / negociación</button><button class="btn" onclick="exportVentasCSV()">⬇️ Exportar CSV</button><input id="buscaVenta" placeholder="🔍 Buscar venta..." oninput="filterVentas()" style="flex:1;max-width:300px;padding:8px 10px;border:1px solid var(--line);border-radius:9px"></div>';
+
+  html+='<div class="cards" style="margin-bottom:16px">';
+  html+='<div class="card kpi"><div class="k-label">Ventas en curso</div><div class="k-val">'+activas.length+'</div><div class="k-sub">'+ganadas+' ganadas</div></div>';
+  html+='<div class="card kpi"><div class="k-label">Pipeline (valor)</div><div class="k-val">$'+fmtMoney(pipeline)+'</div><div class="k-sub">Valor en negociación</div></div>';
+  html+='<div class="card kpi"><div class="k-label">Valor ponderado</div><div class="k-val">$'+fmtMoney(ponderado)+'</div><div class="k-sub">Según probabilidad</div></div>';
+  html+='<div class="card kpi"><div class="k-label">Llamadas pendientes</div><div class="k-val" style="color:'+(llamadas>0?'var(--bad)':'var(--good)')+'">'+llamadas+'</div><div class="k-sub">Hoy o vencidas</div></div>';
+  html+='</div>';
+
+  html+='<div class="card" style="margin-bottom:16px"><h2>📞 A quién hay que llamar</h2>';
+  var calls=activas.slice().sort(function(a,b){var x=a.proxima_fecha||'9999',y=b.proxima_fecha||'9999';return x<y?-1:(x>y?1:0)});
+  if(calls.length===0){html+='<div class="muted">No hay ventas activas.</div>'}
+  else{
+    html+='<table><tr><th>Cliente</th><th>Concepto</th><th>Contacto</th><th>Estado</th><th>Próxima llamada</th><th></th></tr>';
+    calls.forEach(function(v){
+      var overdue=v.proxima_fecha&&v.proxima_fecha<hoy;
+      var hoyEs=v.proxima_fecha===hoy;
+      var fechaTxt=v.proxima_fecha?(fmtShort(v.proxima_fecha)+(v.proxima_hora?' '+esc(v.proxima_hora):'')+(overdue?' · ⚠️ vencida':(hoyEs?' · hoy':''))):'sin fecha';
+      html+='<tr><td>'+(v.cliente?colorDot(v.cli_color)+esc(v.cliente):'—')+'</td><td><b>'+esc(v.concepto)+'</b></td><td>'+esc(v.contacto||'—')+'</td><td>'+estadoPill(v.estado)+'</td><td class="'+(overdue?'overdue':'')+'">'+fechaTxt+'</td>'+
+        '<td style="text-align:right;white-space:nowrap"><button class="btn sm" onclick="openSeguimiento('+v.id+',\'Llamada\')">📞 Registrar</button></td></tr>';
+    });
+    html+='</table>';
+  }
+  html+='</div>';
+
+  html+='<div class="card" style="margin-bottom:16px"><h2>📊 Pipeline de ventas</h2>';
+  if(ventas.length===0){html+='<div class="empty"><div class="big">💰</div>No hay ventas registradas. Crea tu primera negociación con el botón de arriba.</div>'}
+  else{
+    html+='<table id="ventaTable"><tr><th>Cliente</th><th>Concepto</th><th>Monto</th><th>Estado</th><th>Prob.</th><th>Próxima acción</th><th></th></tr>';
+    ventas.forEach(function(v){
+      html+='<tr data-search="'+esc((v.cliente+' '+v.concepto+' '+v.estado+' '+(v.contacto||'')).toLowerCase())+'"><td>'+(v.cliente?esc(v.cliente):'—')+'</td><td><b>'+esc(v.concepto)+'</b></td><td>$'+fmtMoney(v.monto)+'</td><td>'+estadoPill(v.estado)+'</td><td>'+num(v.probabilidad)+'%</td><td>'+esc(v.proxima_fecha?fmtShort(v.proxima_fecha)+(v.proxima_hora?' '+v.proxima_hora:''):'—')+'</td>'+
+        '<td style="text-align:right;white-space:nowrap"><button class="btn sm" onclick="openSeguimiento('+v.id+')">📞 Seguimiento</button> <button class="btn sm" onclick="openVentaModal('+v.id+')">Editar</button> <button class="btn sm danger" onclick="delVenta('+v.id+')">✕</button></td></tr>';
+    });
+    html+='</table>';
+  }
+  html+='</div>';
+
+  html+=resumenMensualHtml();
+  html+=renderTips();
+  $('#view-ventas').innerHTML=html;
+}
+function filterVentas(){var q=$('#buscaVenta').value.toLowerCase();$$('#ventaTable tr[data-search]').forEach(function(r){r.style.display=r.dataset.search.indexOf(q)>=0?'':'none'})}
+
+function openVentaModal(id){
+  var clientes=query("SELECT * FROM clientes ORDER BY nombre");
+  var contactos=query("SELECT * FROM contactos ORDER BY nombre");
+  var v=id?query("SELECT * FROM ventas WHERE id=?",[id])[0]:{cliente_id:null,contacto_id:null,concepto:'',monto:0,estado:'Contactado',probabilidad:20,proxima_fecha:'',proxima_hora:'',notas:''};
+  var clOpt='<option value="">— cliente —</option>'+clientes.map(function(c){return '<option value="'+c.id+'"'+(v.cliente_id===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>'}).join('');
+  var ctOpt='<option value="">— contacto (con quién hablar) —</option>'+contactos.map(function(c){return '<option value="'+c.id+'"'+(v.contacto_id===c.id?' selected':'')+'>'+esc(c.nombre)+(c.cargo?' ('+esc(c.cargo)+')':'')+'</option>'}).join('');
+  var estOpt=ESTADOS.map(function(e){return '<option'+(v.estado===e[0]?' selected':'')+'>'+e[0]+'</option>'}).join('');
+  openModal('<div class="mh"><h3>'+(id?'Editar venta':'Nueva venta / negociación')+'</h3><button class="btn sm ghost" onclick="closeModal()">✕</button></div>'+
+  '<div class="mb">'+
+    '<div class="field"><label>Concepto / producto o servicio *</label><input id="vt_concepto" value="'+esc(v.concepto)+'" placeholder="Ej. Cotización de seguros, proyecto web..."></div>'+
+    '<div class="f2"><div class="field"><label>Cliente</label><select id="vt_cliente">'+clOpt+'</select></div>'+
+    '<div class="field"><label>Contacto (quién decide)</label><select id="vt_contacto">'+ctOpt+'</select></div></div>'+
+    '<div class="f2"><div class="field"><label>Monto estimado</label><input id="vt_monto" type="number" min="0" step="1" value="'+num(v.monto)+'"></div>'+
+    '<div class="field"><label>Probabilidad de cierre (%)</label><input id="vt_prob" type="number" min="0" max="100" value="'+num(v.probabilidad)+'"></div></div>'+
+    '<div class="field"><label>Estado de la negociación</label><select id="vt_estado">'+estOpt+'</select></div>'+
+    '<div class="f2"><div class="field"><label>Próxima llamada / acción (fecha)</label><input id="vt_fecha" type="date" value="'+esc(v.proxima_fecha||'')+'"></div>'+
+    '<div class="field"><label>Hora</label><input id="vt_hora" type="time" min="08:00" max="17:00" value="'+esc(v.proxima_hora||'')+'"></div></div>'+
+    '<div class="field"><label>Notas</label><textarea id="vt_notas">'+esc(v.notas)+'</textarea></div>'+
+  '</div>'+
+  '<div class="mf"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="guardarVenta('+(id||'null')+')">Guardar</button></div>');
+}
+function guardarVenta(id){
+  var concepto=$('#vt_concepto').value.trim();if(!concepto){toast('Escribe el concepto');return}
+  if(!validarHorario($('#vt_fecha').value,$('#vt_hora').value))return;
+  var estado=$('#vt_estado').value;
+  var cerrada=(estado==='Ganada'||estado==='Perdida');
+  var d=[$('#vt_cliente').value||null,$('#vt_contacto').value||null,concepto,num($('#vt_monto').value),estado,parseInt($('#vt_prob').value)||0,$('#vt_fecha').value,$('#vt_hora').value,$('#vt_notas').value];
+  var vid=id;
+  if(id){
+    var fechaCierre=cerrada?(scalar("SELECT fecha_cierre FROM ventas WHERE id=?",[id])||todayStr()):'';
+    run("UPDATE ventas SET cliente_id=?,contacto_id=?,concepto=?,monto=?,estado=?,probabilidad=?,proxima_fecha=?,proxima_hora=?,notas=?,fecha_cierre=? WHERE id=?",d.concat([fechaCierre,id]));
+  }else{
+    run("INSERT INTO ventas(cliente_id,contacto_id,concepto,monto,estado,probabilidad,proxima_fecha,proxima_hora,notas,creado,fecha_cierre) VALUES(?,?,?,?,?,?,?,?,?,?,?)",d.concat([todayStr(),cerrada?todayStr():'']));
+    vid=scalar("SELECT last_insert_rowid()");
+  }
+  syncVentaReminder(vid);
+  saveDB();closeModal();renderVentas();toast('Venta guardada');
+}
+function syncVentaReminder(vid){
+  run("DELETE FROM recordatorios WHERE venta_id=?",[vid]);
+  var v=query("SELECT v.*,c.nombre AS cliente FROM ventas v LEFT JOIN clientes c ON c.id=v.cliente_id WHERE v.id=?",[vid])[0];
+  if(v&&v.proxima_fecha&&v.estado!=='Ganada'&&v.estado!=='Perdida'){
+    run("INSERT INTO recordatorios(titulo,fecha,hora,tipo,repetir,notas,venta_id) VALUES(?,?,?,'Recordatorio','',?,?)",['📞 Llamar: '+(v.cliente?v.cliente+' · ':'')+v.concepto,v.proxima_fecha,v.proxima_hora||'',v.notas||'',vid]);
+  }
+}
+function delVenta(id){if(confirm('¿Eliminar esta venta y su seguimiento?')){run("DELETE FROM ventas WHERE id=?",[id]);run("DELETE FROM seguimiento_ventas WHERE venta_id=?",[id]);run("DELETE FROM recordatorios WHERE venta_id=?",[id]);saveDB();renderVentas()}}
+
+function openSeguimiento(ventaId,tipoPre){
+  var v=query("SELECT v.*,c.nombre AS cliente FROM ventas v LEFT JOIN clientes c ON c.id=v.cliente_id WHERE v.id=?",[ventaId])[0];
+  if(!v)return;
+  var rows=query("SELECT * FROM seguimiento_ventas WHERE venta_id=? ORDER BY fecha DESC,id DESC",[ventaId]);
+  var hist=rows.length?rows.map(function(r){return '<div class="row" style="align-items:flex-start"><div style="flex:1"><div style="font-weight:600">'+esc(r.tipo)+' <span class="muted" style="font-weight:400;font-size:12px">'+esc(r.fecha)+'</span></div><div style="font-size:13px">'+esc(r.notas||'')+'</div></div><a href="#" onclick="delSeg('+r.id+','+ventaId+');return false" class="muted" style="font-size:12px">✕</a></div>'}).join(''):'<div class="muted">Sin seguimiento registrado.</div>';
+  openModal('<div class="mh"><h3>📞 Seguimiento de venta</h3><button class="btn sm ghost" onclick="closeModal()">✕</button></div>'+
+  '<div class="mb">'+
+    '<div class="field"><label>Cliente · Concepto</label><input disabled value="'+esc((v.cliente?v.cliente+' · ':'')+v.concepto)+'"></div>'+
+    '<div class="f2"><div class="field"><label>Tipo de contacto</label><select id="sg_tipo">'+['Llamada','Correo','Reunión','WhatsApp','Nota'].map(function(t){return '<option'+(t===tipoPre?' selected':'')+'>'+t+'</option>'}).join('')+'</select></div>'+
+    '<div class="field"><label>Fecha</label><input id="sg_fecha" type="date" value="'+todayStr()+'"></div></div>'+
+    '<div class="f2"><div class="field"><label>Próxima acción (fecha)</label><input id="sg_proxima" type="date" value="'+esc(v.proxima_fecha||'')+'"></div>'+
+    '<div class="field"><label>Próxima hora</label><input id="sg_proxima_hora" type="time" min="08:00" max="17:00" value="'+esc(v.proxima_hora||'')+'"></div></div>'+
+    '<div class="field"><label>Notas del contacto / avance de la negociación</label><textarea id="sg_notas" placeholder="¿Qué se habló? ¿Cuál es el siguiente paso?"></textarea></div>'+
+    '<button class="btn primary" onclick="guardarSeguimiento('+ventaId+')">💾 Guardar seguimiento</button>'+
+    '<h3 style="margin-top:10px">Historial</h3><div>'+hist+'</div>'+
+  '</div>'+
+  '<div class="mf"><button class="btn" onclick="closeModal()">Cerrar</button></div>');
+}
+function guardarSeguimiento(ventaId){
+  if(!validarHorario($('#sg_proxima').value,$('#sg_proxima_hora').value))return;
+  run("INSERT INTO seguimiento_ventas(venta_id,fecha,tipo,notas) VALUES(?,?,?,?)",[ventaId,$('#sg_fecha').value,$('#sg_tipo').value,$('#sg_notas').value]);
+  run("UPDATE ventas SET proxima_fecha=?,proxima_hora=? WHERE id=?",[$('#sg_proxima').value,$('#sg_proxima_hora').value||'',ventaId]);
+  syncVentaReminder(ventaId);
+  saveDB();toast('Seguimiento guardado');
+  openSeguimiento(ventaId);
+}
+function delSeg(id,ventaId){run("DELETE FROM seguimiento_ventas WHERE id=?",[id]);saveDB();openSeguimiento(ventaId)}
+
+function renderTips(){
+  var cats={};
+  TIPS.forEach(function(t){if(!cats[t[0]])cats[t[0]]=[];cats[t[0]].push(t)});
+  var day=Math.floor(Date.now()/86400000);
+  var tip=TIPS[day%TIPS.length];
+  var html='<div class="card"><h2>💡 Tips de ventas</h2>';
+  html+='<div style="background:#ecfeff;border:1px solid #a5f3fc;border-radius:12px;padding:14px 16px;margin-bottom:12px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#0e7490;font-weight:700">🌟 Tip del día</div><div style="font-weight:700;margin-top:4px">'+esc(tip[1])+'</div><div style="font-size:13.5px;margin-top:4px;color:#155e75">'+esc(tip[2])+'</div></div>';
+  Object.keys(cats).forEach(function(cat){
+    html+='<h3 style="margin-top:14px">'+esc(cat)+'</h3>';
+    cats[cat].forEach(function(t){
+      html+='<details style="margin-bottom:4px"><summary style="cursor:pointer;font-weight:600;font-size:14px">'+esc(t[1])+'</summary><div style="font-size:13.5px;color:var(--muted);padding:6px 0 6px 16px">'+esc(t[2])+'</div></details>';
+    });
+  });
+  html+='</div>';
+  return html;
+}
+
+function csvCell(s){s=String(s==null?'':s);if(/[",\n]/.test(s))s='"'+s.replace(/"/g,'""')+'"';return s}
+function exportVentasCSV(){
+  var rows=query("SELECT v.*,c.nombre AS cliente,ct.nombre AS contacto FROM ventas v LEFT JOIN clientes c ON c.id=v.cliente_id LEFT JOIN contactos ct ON ct.id=v.contacto_id ORDER BY v.id DESC");
+  var lines=[['Cliente','Contacto','Concepto','Monto','Estado','Probabilidad (%)','Próxima acción','Notas'].join(',')];
+  rows.forEach(function(v){
+    lines.push([v.cliente||'',v.contacto||'',v.concepto||'',String(num(v.monto)),v.estado||'',String(num(v.probabilidad)),v.proxima_fecha?(v.proxima_fecha+(v.proxima_hora?' '+v.proxima_hora:'')):'',(v.notas||'').replace(/\n/g,' ')].map(csvCell).join(','));
+  });
+  var blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ventas_'+todayStr()+'.csv';document.body.appendChild(a);a.click();a.remove();
+  toast('Pipeline exportado a CSV (se abre con Excel)');
+}
+function resumenMensualData(){
+  var now=new Date(),meses=[];
+  for(var i=5;i>=0;i--){
+    var d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    var s=toYMD(d),e=toYMD(new Date(now.getFullYear(),now.getMonth()-i+1,1));
+    var r=query("SELECT estado,COUNT(*) c,COALESCE(SUM(monto),0) m FROM ventas WHERE fecha_cierre>=? AND fecha_cierre<? AND estado IN ('Ganada','Perdida') GROUP BY estado",[s,e]);
+    var gan={c:0,m:0},per={c:0,m:0};
+    r.forEach(function(x){if(x.estado==='Ganada'){gan.c=x.c;gan.m=x.m}if(x.estado==='Perdida'){per.c=x.c;per.m=x.m}});
+    var tot=gan.c+per.c,tasa=tot?Math.round(gan.c/tot*100):0;
+    meses.push({label:d.toLocaleDateString('es-ES',{month:'short',year:'2-digit'}),mes:d.toLocaleDateString('es-ES',{month:'long',year:'numeric'}),gan:gan,per:per,tasa:tasa});
+  }
+  return meses;
+}
+function resumenMensualHtml(){
+  var meses=resumenMensualData();
+  var max=0;meses.forEach(function(m){max=Math.max(max,num(m.gan.m),num(m.per.m))});if(max<=0)max=1;
+  var cols=meses.map(function(m){
+    var hg=Math.round(num(m.gan.m)/max*100),hp=Math.round(num(m.per.m)/max*100);
+    return '<div class="col"><div class="val">'+fmtMoney(m.gan.m)+'</div><div class="b" style="height:'+Math.max(2,hg)+'%"></div><div class="b red" style="height:'+Math.max(2,hp)+'%"></div><div class="lbl">'+esc(m.label)+'</div></div>';
+  });
+  var html='<div class="card" style="margin-bottom:16px"><h2>📆 Resumen mensual de ventas</h2>';
+  html+='<div class="chart" style="height:170px">'+cols.join('')+'</div>';
+  html+='<div style="display:flex;gap:16px;font-size:12px;color:var(--muted);margin:6px 0 14px"><span><span class="dot" style="background:#0ea5a4"></span>Monto ganado</span><span><span class="dot" style="background:#dc2626"></span>Monto perdido</span></div>';
+  html+='<table><tr><th>Mes</th><th>Ganadas</th><th>Monto ganado</th><th>Perdidas</th><th>Monto perdido</th><th>Tasa de cierre</th></tr>';
+  meses.forEach(function(m){
+    html+='<tr><td style="text-transform:capitalize"><b>'+esc(m.mes)+'</b></td><td><span class="pill green">'+m.gan.c+'</span></td><td>$'+fmtMoney(m.gan.m)+'</td><td><span class="pill red">'+m.per.c+'</span></td><td>$'+fmtMoney(m.per.m)+'</td><td>'+(m.tasa>0?m.tasa+'%':'—')+'</td></tr>';
+  });
+  html+='</table></div>';
+  return html;
+}
+
+/* ================= REUNIONES ================= */
+var reunFiltro='proximas';
+function renderReuniones(){
+  var order=reunFiltro==='todas'?"ORDER BY fecha DESC,hora DESC":"AND fecha>='"+todayStr()+"' ORDER BY fecha,hora";
+  var rs=query("SELECT * FROM reuniones WHERE 1=1 "+order);
+  if(reunFiltro==='proximas')rs=query("SELECT * FROM reuniones WHERE fecha>=? ORDER BY fecha,hora LIMIT 100",[todayStr()]);
+  if(reunFiltro==='pasadas')rs=query("SELECT * FROM reuniones WHERE fecha<? ORDER BY fecha DESC,hora DESC LIMIT 100",[todayStr()]);
+
+  var html='<div class="toolbar"><button class="btn primary" onclick="openReunionModal()">＋ Nueva reunión</button>'+
+    '<div class="tabs" style="margin:0">'+
+    '<button class="'+(reunFiltro==='proximas'?'active':'')+'" onclick="reunFiltro=\'proximas\';renderReuniones()">Próximas</button>'+
+    '<button class="'+(reunFiltro==='pasadas'?'active':'')+'" onclick="reunFiltro=\'pasadas\';renderReuniones()">Pasadas</button>'+
+    '<button class="'+(reunFiltro==='todas'?'active':'')+'" onclick="reunFiltro=\'todas\';renderReuniones()">Todas</button></div></div>';
+
+  html+='<div class="card"><table><tr><th>Fecha</th><th>Hora</th><th>Reunión</th><th>Participantes</th><th>Estado</th><th></th></tr>';
+  if(rs.length===0)html+='<tr><td colspan="6"><div class="empty"><div class="big">🤝</div>No hay reuniones en esta vista.</div></td></tr>';
+  rs.forEach(function(r){html+=meetingRowHtml(r)+'<td style="text-align:right;white-space:nowrap"><button class="btn sm" onclick="openReunionModal('+r.id+')">Editar</button> <button class="btn sm danger" onclick="delReunion('+r.id+')">✕</button></td></tr>'});
+  html+='</table></div>';
+  $('#view-reuniones').innerHTML=html;
+}
+function openReunionModal(id){
+  var skills=query("SELECT * FROM skills ORDER BY nombre");
+  var contacts=query("SELECT * FROM contactos ORDER BY nombre");
+  var clientes=query("SELECT * FROM clientes ORDER BY nombre");
+  var r=id?query("SELECT * FROM reuniones WHERE id=?",[id])[0]:{fecha:todayStr(),hora:'',titulo:'',tema:'',lugar:'',estado:'Programada',skill_id:null,cliente_id:null,recordar_min:0,notas:''};
+  var selContacts=id?query("SELECT contacto_id FROM reunion_contactos WHERE reunion_id=?",[id]).map(function(x){return x.contacto_id}):[];
+  var skOpt='<option value="">— sin skill —</option>'+skills.map(function(s){return '<option value="'+s.id+'"'+(r.skill_id===s.id?' selected':'')+'>'+esc(s.nombre)+'</option>'}).join('');
+  var clOpt='<option value="">— sin cliente —</option>'+clientes.map(function(c){return '<option value="'+c.id+'"'+(r.cliente_id===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>'}).join('');
+  var remOpt='<option value="0"'+(r.recordar_min==0?' selected':'')+'>Sin recordatorio</option>'+[['10','10 minutos antes'],['30','30 minutos antes'],['60','1 hora antes'],['1440','1 día antes']].map(function(p){return '<option value="'+p[0]+'"'+(String(r.recordar_min)===p[0]?' selected':'')+'>'+p[1]+'</option>'}).join('');
+  var ctList=contacts.map(function(c){return '<label class="contact-chk"><input type="checkbox" class="rc" value="'+c.id+'"'+(selContacts.indexOf(c.id)>=0?' checked':'')+'><div><div>'+esc(c.nombre)+'</div><div class="sub">'+(c.cargo?esc(c.cargo):'')+(c.empresa?' · '+esc(c.empresa):'')+'</div></div></label>'}).join('');
+  if(contacts.length===0)ctList='<div class="muted">Aún no hay contactos. <a href="#" onclick="closeModal();showTab(\'contactos\');return false">Crear contacto</a></div>';
+
+  openModal('<div class="mh"><h3>'+(id?'Editar reunión':'Nueva reunión')+'</h3><button class="btn sm ghost" onclick="closeModal()">✕</button></div>'+
+  '<div class="mb">'+
+    '<div class="field"><label>Título / asunto *</label><input id="ru_titulo" value="'+esc(r.titulo)+'"></div>'+
+    '<div class="f2"><div class="field"><label>Fecha</label><input id="ru_fecha" type="date" value="'+r.fecha+'"></div>'+
+    '<div class="field"><label>Hora</label><input id="ru_hora" type="time" min="08:00" max="17:00" value="'+esc(r.hora||'')+'"></div></div>'+
+    '<div class="field"><label>Tema a tratar</label><textarea id="ru_tema" style="min-height:54px" placeholder="¿Qué se va a tratar en la reunión?">'+esc(r.tema)+'</textarea></div>'+
+    '<div class="f2"><div class="field"><label>Lugar / enlace</label><input id="ru_lugar" value="'+esc(r.lugar)+'"></div>'+
+    '<div class="field"><label>Estado</label><select id="ru_estado">'+['Programada','Realizada','Cancelada'].map(function(e){return '<option'+(r.estado===e?' selected':'')+'>'+e+'</option>'}).join('')+'</select></div></div>'+
+    '<div class="f2"><div class="field"><label>Skill relacionado</label><select id="ru_skill">'+skOpt+'</select></div>'+
+    '<div class="field"><label>Cliente</label><select id="ru_cliente">'+clOpt+'</select></div></div>'+
+    '<div class="field"><label>Recordatorio de la reunión</label><select id="ru_recordar">'+remOpt+'</select></div>'+
+    '<div class="field"><label>Participantes (nombres y cargos)</label><div style="max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:8px 12px">'+ctList+'</div></div>'+
+    '<div class="field"><label>Notas</label><textarea id="ru_notas">'+esc(r.notas)+'</textarea></div>'+
+  '</div>'+
+  '<div class="mf"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="guardarReunion('+(id||'null')+')">Guardar</button></div>');
+}
+function guardarReunion(id){
+  var titulo=$('#ru_titulo').value.trim();if(!titulo){toast('Escribe un título');return}
+  if(!validarHorario($('#ru_fecha').value,$('#ru_hora').value))return;
+  var fecha=$('#ru_fecha').value,hora=$('#ru_hora').value,cliente=$('#ru_cliente').value||null,recordar=parseInt($('#ru_recordar').value)||0;
+  var d=[titulo,fecha,hora,$('#ru_tema').value,$('#ru_lugar').value,$('#ru_estado').value,$('#ru_skill').value||null,cliente,recordar,$('#ru_notas').value];
+  var rid=id;
+  if(id)run("UPDATE reuniones SET titulo=?,fecha=?,hora=?,tema=?,lugar=?,estado=?,skill_id=?,cliente_id=?,recordar_min=?,notas=? WHERE id=?",d.concat([id]));
+  else{run("INSERT INTO reuniones(titulo,fecha,hora,tema,lugar,estado,skill_id,cliente_id,recordar_min,notas) VALUES(?,?,?,?,?,?,?,?,?,?)",d);rid=scalar("SELECT last_insert_rowid()")}
+  run("DELETE FROM reunion_contactos WHERE reunion_id=?",[rid]);
+  $$('#modalBox .rc:checked').forEach(function(c){run("INSERT OR IGNORE INTO reunion_contactos(reunion_id,contacto_id) VALUES(?,?)",[rid,+c.value])});
+  run("DELETE FROM recordatorios WHERE reunion_id=?",[rid]);
+  if(recordar>0){
+    var dt=parseYMD(fecha);
+    if(hora){var hp=hora.split(':');dt.setHours(+hp[0],+hp[1],0,0)}
+    dt.setMinutes(dt.getMinutes()-recordar);
+    dt=ajustarALaboral(dt);
+    run("INSERT INTO recordatorios(titulo,fecha,hora,tipo,repetir,notas,reunion_id) VALUES(?,?,?,'Recordatorio','',?,?)",['Reunión: '+titulo,toYMD(dt),pad(dt.getHours())+':'+pad(dt.getMinutes()),$('#ru_tema').value||'',rid]);
+  }
+  saveDB();closeModal();renderReuniones();toast('Reunión guardada');
+}
+function delReunion(id){if(confirm('¿Eliminar esta reunión?')){run("DELETE FROM reuniones WHERE id=?",[id]);run("DELETE FROM reunion_contactos WHERE reunion_id=?",[id]);run("DELETE FROM recordatorios WHERE reunion_id=?",[id]);saveDB();renderReuniones()}}
+
+/* ================= PLANIFICACIÓN ================= */
+function renderPlanificacion(){
+  var skills=activeSkills();
+  var html='<div class="card"><h2>Metas semanales por skill</h2><table><tr><th>Skill</th><th>Categoría</th><th>Veces/sem</th><th>Horas/sem</th><th>Esta semana (veces)</th><th>Esta semana (horas)</th></tr>';
+  var ws=mondayOf(new Date()),s0=toYMD(ws),s1=toYMD(addDays(ws,7));
+  if(skills.length===0)html+='<tr><td colspan="6"><div class="empty"><div class="big">🎯</div>Sin skills para planificar.</div></td></tr>';
+  skills.forEach(function(s){
+    var r=query("SELECT COUNT(*) v, COALESCE(SUM(horas),0) h FROM actividades_diarias WHERE skill_id=? AND fecha>=? AND fecha<? AND cumplido=1",[s.id,s0,s1])[0];
+    html+='<tr><td><b>'+esc(s.nombre)+'</b></td><td>'+(s.categoria?colorDot(s.cat_color)+esc(s.categoria):'—')+'</td><td>'+s.meta_veces_semana+'</td><td>'+num(s.meta_horas_semana)+' h</td>'+
+      '<td><b>'+r.v+'</b> / '+s.meta_veces_semana+'</td><td><b>'+num(r.h)+'</b> / '+num(s.meta_horas_semana)+' h</td></tr>';
+  });
+  html+='</table></div>';
+
+  html+='<div class="card" style="margin-top:16px"><h2>Vista semanal · cumplimiento pasado y futuro</h2>';
+  html+='<table><tr><th>Semana</th><th>Veces (real / plan)</th><th>Horas (real / plan)</th><th>% cumplimiento</th></tr>';
+  for(var i=-3;i<=5;i++){
+    var m=addDays(ws,i*7);var st=weekStats(m);
+    var isPast=i<0,isCur=i===0;
+    var label=weekLabel(m)+(isCur?' <span class="pill blue">actual</span>':(isPast?'':' <span class="pill gray">plan</span>'));
+    var pct=isPast||isCur?st.pctV:null;
+    var bar=(isPast||isCur)?'<div class="bar" style="margin-top:4px"><span style="width:'+Math.min(100,st.pctV)+'%"></span></div>':'';
+    html+='<tr><td>'+label+'</td><td>'+st.timesReal+' / '+st.timesPlan+'</td><td>'+st.hoursReal+' / '+st.hoursPlan+' h</td>'+
+      '<td style="min-width:120px">'+(pct===null?'<span class="muted">Por venir</span>':pct+'%'+bar)+'</td></tr>';
+  }
+  html+='</table></div>';
+
+  html+='<div class="card" style="margin-top:16px"><h2>Resumen general</h2>';
+  var totalSkills=query("SELECT COUNT(*) c FROM skills WHERE activo=1")[0].c;
+  var totalCumpl=query("SELECT COUNT(*) c FROM actividades_diarias WHERE cumplido=1")[0].c;
+  var totalHoras=query("SELECT COALESCE(SUM(horas),0) h FROM actividades_diarias")[0].h;
+  var totalReu=query("SELECT COUNT(*) c FROM reuniones")[0].c;
+  var totalCont=query("SELECT COUNT(*) c FROM contactos")[0].c;
+  html+='<div class="cards"><div class="card kpi"><div class="k-label">Skills activos</div><div class="k-val">'+totalSkills+'</div></div>'+
+    '<div class="card kpi"><div class="k-label">Cumplimientos registrados</div><div class="k-val">'+totalCumpl+'</div></div>'+
+    '<div class="card kpi"><div class="k-label">Horas totales</div><div class="k-val">'+num(totalHoras)+' h</div></div>'+
+    '<div class="card kpi"><div class="k-label">Reuniones / Contactos</div><div class="k-val">'+totalReu+' / '+totalCont+'</div></div></div>';
+  html+='</div>';
+
+  $('#view-planificacion').innerHTML=html;
+}
+
+/* ================= exportar / importar ================= */
+function exportDB(){
+  var data=db.export();
+  var blob=new Blob([data],{type:'application/x-sqlite3'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='agenda_'+todayStr()+'.sqlite';
+  document.body.appendChild(a);a.click();a.remove();
+  toast('Base de datos exportada (.sqlite)');
+}
+$('#importFile').addEventListener('change',function(e){
+  var f=e.target.files[0];if(!f)return;
+  f.arrayBuffer().then(function(buf){
+    try{
+      var ndb=new SQL.Database(new Uint8Array(buf));
+      db.close();db=ndb;createSchema();saveDB();hoyFecha=todayStr();
+      renderAll();toast('Base de datos importada');
+    }catch(err){toast('Archivo no válido');console.error(err)}
+  });
+  e.target.value='';
+});
+
+/* ================= respaldo automático ================= */
+var backupHandle=null,_backupTimer=null;
+function setBackupState(s){
+  var b=$('#backupBtn'),st=$('#backupStatus');
+  if(s==='active'){if(b)b.textContent='🛡️ Respaldo automático ✓';if(st)st.textContent='Respaldo activo: se guarda una copia en archivo tras cada cambio';}
+  else if(s==='needperm'){if(b)b.textContent='🔐 Reactivar respaldo';if(st)st.textContent='Respaldo pausado: pulsa el botón para reactivarlo';}
+  else{if(b)b.textContent='🛡️ Activar respaldo automático';if(st)st.textContent='Actívalo para guardar siempre una copia de seguridad en un archivo';}
+}
+function writeBackup(){
+  if(!backupHandle)return;
+  backupHandle.createWritable().then(function(w){
+    return w.write(db.export()).then(function(){return w.close()});
+  }).then(function(){setBackupState('active')}).catch(function(){setBackupState('needperm')});
+}
+function toggleBackup(){
+  if(backupHandle){
+    backupHandle.requestPermission({mode:'readwrite'}).then(function(p){
+      if(p==='granted'){setBackupState('active');writeBackup();toast('Respaldo automático activado')}
+      else{backupHandle=null;idbSet('backupHandle',null);setBackupState('none')}
+    }).catch(function(){setBackupState('none')});
+    return;
+  }
+  if(!('showSaveFilePicker' in window)){toast('Este navegador no permite respaldo a archivo. Usa "Exportar .sqlite".');return}
+  window.showSaveFilePicker({suggestedName:'agenda_respaldo.sqlite',types:[{description:'Base de datos SQLite',accept:{'application/x-sqlite3':['.sqlite','.db']}}]}).then(function(h){
+    backupHandle=h;idbSet('backupHandle',h);setBackupState('active');writeBackup();toast('Respaldo automático activado');
+  }).catch(function(){});
+}
+function restoreBackup(){
+  idbGet('backupHandle').then(function(h){
+    if(!h)return;
+    h.queryPermission({mode:'readwrite'}).then(function(p){
+      if(p==='granted'){backupHandle=h;setBackupState('active')}
+      else{backupHandle=h;setBackupState('needperm')}
+    }).catch(function(){backupHandle=h;setBackupState('needperm')});
+  });
+}
+
+/* ================= arranque ================= */
+function renderAll(){$('#todayLabel').textContent='Hoy es '+fmtLong(todayStr());showTab('dashboard')}
+
+function boot(){
+  var wasm=base64ToBytes(window.SQL_WASM_BASE64);
+  initSqlJs({wasmBinary:wasm}).then(function(SQLModule){
+    SQL=SQLModule;
+    idbGet('db').then(function(saved){
+      if(saved)db=new SQL.Database(new Uint8Array(saved));
+      else db=new SQL.Database();
+      createSchema();
+      renderAll();
+      restoreBackup();
+      setInterval(checkReminders,15000);
+      setTimeout(checkReminders,1500);
+      window.addEventListener('beforeunload',function(){try{saveDB()}catch(e){}});
+    });
+  }).catch(function(err){
+    document.body.innerHTML='<div style="padding:60px;font-family:Segoe UI,sans-serif;text-align:center"><h2>No se pudo iniciar</h2><p>'+esc(String(err&&err.message||err))+'</p></div>';
+  });
+}
+boot();
+</script>
+</body>
+</html>
